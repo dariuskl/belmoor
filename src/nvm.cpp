@@ -31,7 +31,7 @@ namespace belmoor {
       } page;
     };
 
-    auto storage_ = NVM{};
+    const auto storage_ = NVM{};
 
   } // namespace
 
