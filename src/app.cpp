@@ -142,6 +142,9 @@ namespace belmoor {
         pfl = read_power_factor(SPI_read{u1_spi});
         freq = read_frequency(SPI_read{u1_spi});
         il_rms = read_current(SPI_read{u1_spi});
+        if (il_rms) {
+          il_rms = {(*il_rms).raw * 10};
+        }
         u_rms = read_voltage(SPI_read{u1_spi});
         pl_mean = read_real_power(SPI_read{u1_spi});
         sl_mean = read_apparent_power(SPI_read{u1_spi});
