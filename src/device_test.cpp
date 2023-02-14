@@ -1,4 +1,4 @@
-#include "relay.hpp"
+#include "device.hpp"
 
 #include <catch2/catch.hpp>
 

@@ -44,7 +44,7 @@ if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL ${CMAKE_HOST_SYSTEM_PROCESSOR})
             src/nvm.cpp
             src/nvm_test.cpp
             src/pack_test.cpp
-            src/relay_test.cpp
+            src/device_test.cpp
             src/spi_test.cpp
             src/usb.cpp
             src/usb_test.cpp)
@@ -59,13 +59,13 @@ else ()
 
     target_sources(belmoor PRIVATE
             src/app.cpp
-            src/display.hpp
+            src/device.hpp
+            src/glue.cpp
             src/m90e26.hpp
             src/nvm.cpp
             src/nvm.hpp
             src/pack.hpp
             src/print.hpp
-            src/relay.hpp
             src/spi.hpp
             src/sys_tick.hpp
             src/usb.cpp
