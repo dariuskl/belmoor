@@ -6,7 +6,7 @@ PM 10A, which is a DIN-rail mounted power metering mains load switch of obscure
 origin.
 
 A number of these devices have been purchased used. The original manufacturer
-remains unknown besides its name "Belmoor Ltd.", which yields to plausible
+remains unknown besides its name "Belmoor Ltd.", which yields no plausible
 results when researched.
 
 The parts used in these devices are high quality (where it matters). The

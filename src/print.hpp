@@ -4,6 +4,7 @@
 #include "utils.hpp"
 
 #include <array>
+#include <cstdint>
 #include <cstdio>
 #include <optional>
 
@@ -12,10 +13,6 @@ namespace belmoor {
   inline int print(char *const buffer, const int buffer_len,
                    char const *string) {
     return std::snprintf(buffer, static_cast<size_t>(buffer_len), "%s", string);
-  }
-
-  inline int print(char *const buffer, const int buffer_len, const u16 v) {
-    return std::snprintf(buffer, static_cast<size_t>(buffer_len), "%04xh", v.v);
   }
 
   inline int print(char *const buffer, const int buffer_len, const intmax_t v) {

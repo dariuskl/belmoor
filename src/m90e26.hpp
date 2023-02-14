@@ -120,24 +120,24 @@ namespace belmoor {
   }
 
   template <class ReadFn_>
-  std::optional<Fixed_point<1000>> read_real_power(ReadFn_ read) {
+  std::optional<Fixed_point<1>> read_real_power(ReadFn_ read) {
     if (auto msg = M90E26_register_transfer{M90E26_register::P_mean};
         read(msg)) {
       const auto data = msg.rx_value();
-      return {{static_cast<int32_t>(data & ~0x8000)
-               * static_cast<int32_t>((data & 0x8000) ? -1 : 1)}};
+      return {{static_cast<int32_t>(data & ~0x8000U)
+               * static_cast<int32_t>(((data & 0x8000U) != 0U) ? -1 : 1)}};
     } else {
       return {};
     }
   }
 
   template <class ReadFn_>
-  std::optional<Fixed_point<1000>> read_reactive_power(ReadFn_ read) {
+  std::optional<Fixed_point<1>> read_reactive_power(ReadFn_ read) {
     if (auto msg = M90E26_register_transfer{M90E26_register::Q_mean};
         read(msg)) {
       const auto data = msg.rx_value();
-      return {{static_cast<int32_t>(data & ~0x8000)
-               * static_cast<int32_t>((data & 0x8000) ? -1 : 1)}};
+      return {{static_cast<int32_t>(data & ~0x8000U)
+               * static_cast<int32_t>(((data & 0x8000U) != 0U) ? -1 : 1)}};
     } else {
       return {};
     }
@@ -157,15 +157,15 @@ namespace belmoor {
     if (auto msg = M90E26_register_transfer{M90E26_register::PowerF};
         read(msg)) {
       const auto data = msg.rx_value();
-      return {{static_cast<int32_t>(data & ~0x8000)
-               * static_cast<int32_t>((data & 0x8000) ? -1 : 1)}};
+      return {{static_cast<int32_t>(data & ~0x8000U)
+               * static_cast<int32_t>(((data & 0x8000U) != 0U) ? -1 : 1)}};
     } else {
       return {};
     }
   }
 
   template <class ReadFn_>
-  std::optional<Fixed_point<1000>> read_apparent_power(ReadFn_ read) {
+  std::optional<Fixed_point<1>> read_apparent_power(ReadFn_ read) {
     if (auto msg = M90E26_register_transfer{M90E26_register::S_mean};
         read(msg)) {
       return {{static_cast<int16_t>(msg.rx_value())}};

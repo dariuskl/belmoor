@@ -101,13 +101,13 @@ namespace belmoor {
   struct Measurements {
     std::optional<uint16_t> status;
     std::optional<uint16_t> adj_start;
-    std::optional<Fixed_point<1000>> il_rms;
-    std::optional<Fixed_point<100>> u_rms;
-    std::optional<Fixed_point<1000>> pl_mean;
-    std::optional<Fixed_point<1000>> sl_mean;
-    std::optional<Fixed_point<1000>> ql_mean;
-    std::optional<Fixed_point<100>> freq;
-    std::optional<Fixed_point<1000>> pfl;
+    std::optional<Fixed_point<1000>> il_rms; // 1 mA
+    std::optional<Fixed_point<100>> u_rms; // 10 mV
+    std::optional<Fixed_point<1>> pl_mean; // 1 W
+    std::optional<Fixed_point<1>> sl_mean; // 1 VA
+    std::optional<Fixed_point<1>> ql_mean; // 1 var
+    std::optional<Fixed_point<100>> freq; // 0.01 Hz
+    std::optional<Fixed_point<1000>> pfl; // 0.001
   };
 
   void led_step(const Operating_mode operating_mode, const Measurements &m,
@@ -194,11 +194,11 @@ namespace belmoor {
             .print(m.il_rms, " A")
             .set_font(Font_7x10)
             .at(0, 40)
-            .print(m.pl_mean, " kW")
+            .print(m.pl_mean, " W")
             .at(64, 40)
             .print(m.freq, " Hz")
             .at(0, 51)
-            .print(m.sl_mean, " kVA")
+            .print(m.sl_mean, " VA")
             .at(64, 51)
             .print(m.pfl);
       }

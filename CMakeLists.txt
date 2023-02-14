@@ -27,7 +27,7 @@ endif ()
 
 add_compile_options(
         -Werror -Wall -Wextra -pedantic -pedantic-errors
-        -Wreturn-type -Wreturn-local-addr -Wswitch
+        -Werror=return-type -Werror=return-local-addr -Werror=switch
         -Wconversion -Wsign-conversion)
 
 
@@ -47,7 +47,8 @@ if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL ${CMAKE_HOST_SYSTEM_PROCESSOR})
             src/device_test.cpp
             src/spi_test.cpp
             src/usb.cpp
-            src/usb_test.cpp)
+            src/usb_test.cpp
+            src/utils_test.cpp)
 
     target_include_directories(belmoor PRIVATE
             src/test
@@ -57,7 +58,10 @@ else ()
 
     set_target_properties(belmoor PROPERTIES OUTPUT_NAME "belmoor.elf")
 
-    target_sources(belmoor PRIVATE
+    target_sources(belmoor
+        PRIVATE
+            src/app/dehumidifier_control.hpp
+            src/am2320.hpp
             src/app.cpp
             src/device.hpp
             src/glue.cpp
@@ -72,10 +76,12 @@ else ()
             src/usb.hpp
             src/utils.hpp)
 
-    target_link_libraries(belmoor PRIVATE
+    target_link_libraries(belmoor
+        PRIVATE
             stm32f072c8tx ssd1306)
 
-    target_link_options(belmoor PRIVATE
+    target_link_options(belmoor
+        PRIVATE
             LINKER:--gc-sections
             LINKER:-print-memory-usage
             --specs=nosys.specs --specs=nano.specs)

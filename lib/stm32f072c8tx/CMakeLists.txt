@@ -2,10 +2,12 @@ add_library(stm32f072c8tx OBJECT)
 
 target_compile_definitions(stm32f072c8tx PUBLIC STM32F072xB)
 
-target_compile_options(stm32f072c8tx PUBLIC
+target_compile_options(stm32f072c8tx
+    PUBLIC
         -mcpu=cortex-m0 -mthumb)
 
-target_sources(stm32f072c8tx PRIVATE
+target_sources(stm32f072c8tx
+    PRIVATE
         startup_stm32f072xb.s
         Core/Src/gpio.c
         Core/Src/i2c.c
@@ -44,7 +46,8 @@ target_sources(stm32f072c8tx PRIVATE
         USB_DEVICE/App/usbd_desc.c
         USB_DEVICE/Target/usbd_conf.c)
 
-target_include_directories(stm32f072c8tx SYSTEM INTERFACE
+target_include_directories(stm32f072c8tx
+    SYSTEM INTERFACE
         Core/Inc/
         Drivers/CMSIS/Core/Include
         Drivers/CMSIS/Device/ST/STM32F0xx/Include
@@ -53,7 +56,7 @@ target_include_directories(stm32f072c8tx SYSTEM INTERFACE
         Middlewares/ST/STM32_USB_Device_Library/Core/Inc
         USB_DEVICE/App/
         USB_DEVICE/Target/
-        PRIVATE
+    PRIVATE
         Core/Inc/
         Drivers/CMSIS/Core/Include
         Drivers/CMSIS/Device/ST/STM32F0xx/Include
@@ -63,6 +66,7 @@ target_include_directories(stm32f072c8tx SYSTEM INTERFACE
         USB_DEVICE/App/
         USB_DEVICE/Target/)
 
-target_link_options(stm32f072c8tx PUBLIC
+target_link_options(stm32f072c8tx
+    PUBLIC
         -T${CMAKE_CURRENT_SOURCE_DIR}/STM32F072C8Tx_FLASH.ld
         -mcpu=cortex-m0 -mthumb)

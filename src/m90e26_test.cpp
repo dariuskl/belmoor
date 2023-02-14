@@ -27,12 +27,34 @@ namespace belmoor {
     }
   }
 
-  SCENARIO("read measurements", "[m90e26]") {
+  SCENARIO("read power factor", "[m90e26]") {
     GIVEN("") {
       const auto vectors = GENERATE(std::make_pair(0x03e8U, 1.0),
-                                    std::make_pair(0x83e8U, -1.0));
+                                    std::make_pair(0x83e8U, -1.0),
+                                    std::make_pair(0x0000U, 0.0));
       WHEN("") {
         const auto value = read_power_factor(
+            [&](M90E26_register_transfer &msg) {
+              msg.rx_data()[1] = static_cast<std::byte>((vectors.first >> 8U)
+                                                        & 0xffU);
+              msg.rx_data()[2] = static_cast<std::byte>(vectors.first & 0xffU);
+              return true;
+            });
+        THEN("") {
+          REQUIRE(value);
+          REQUIRE(*value == vectors.second);
+        }
+      }
+    }
+  }
+
+  SCENARIO("read real power", "[m90e26]") {
+    GIVEN("") {
+      const auto vectors = GENERATE(std::make_pair(0x7fffU, 32767.0),
+                                    std::make_pair(0xffffU, -32767.0),
+                                    std::make_pair(0x0000U, 0.0));
+      WHEN("") {
+        const auto value = read_real_power(
             [&](M90E26_register_transfer &msg) {
               msg.rx_data()[1] = static_cast<std::byte>((vectors.first >> 8U)
                                                         & 0xffU);

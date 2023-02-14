@@ -51,7 +51,7 @@ namespace belmoor {
     template <typename... Args> Display &print(Args... args) {
       belmoor::print(buf_, args...);
       const auto anchor = ssd1306_GetCursor();
-      for (char *s = std::strtok(buf_.data(), "\n"); s;
+      for (char *s = std::strtok(buf_.data(), "\n"); s != nullptr;
            s = std::strtok(nullptr, "\n"),
                 at(anchor.x, ssd1306_GetCursor().y + font_.FontHeight)) {
         ssd1306_WriteString(s, font_, color_);
