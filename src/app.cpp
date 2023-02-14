@@ -251,8 +251,12 @@ namespace belmoor {
         break;
 
       case Operating_mode::Normal:
+        if (*u_rms > 5.0) {
+          HAL_GPIO_WritePin(LD1_GREEN_GPIO_Port, LD1_GREEN_Pin, GPIO_PIN_SET);
+        } else {
+          HAL_GPIO_WritePin(LD1_GREEN_GPIO_Port, LD1_GREEN_Pin, GPIO_PIN_RESET);
+        }
         if (*status != 0U) {
-          // FIXME cannot see error text; overlayed by measurements
           HAL_GPIO_WritePin(LD1_RED_GPIO_Port, LD1_RED_Pin, GPIO_PIN_SET);
           display.set_font(Font_11x18)
               .at(0, 0)
@@ -262,41 +266,36 @@ namespace belmoor {
               .print("status: ", status);
         } else {
           HAL_GPIO_WritePin(LD1_RED_GPIO_Port, LD1_RED_Pin, GPIO_PIN_RESET);
-        }
-        if (*u_rms > 5.0) {
-          HAL_GPIO_WritePin(LD1_GREEN_GPIO_Port, LD1_GREEN_Pin, GPIO_PIN_SET);
-        } else {
-          HAL_GPIO_WritePin(LD1_GREEN_GPIO_Port, LD1_GREEN_Pin, GPIO_PIN_RESET);
-        }
-        display.set_font(Font_11x18)
-            .at(0, 0)
-            .print(u_rms, " V")
-            .at(0, 20)
-            .print(il_rms, " A")
-            .set_font(Font_7x10)
-            .at(0, 40);
+          display.set_font(Font_11x18)
+              .at(0, 0)
+              .print(u_rms, " V")
+              .at(0, 20)
+              .print(il_rms, " A")
+              .set_font(Font_7x10)
+              .at(0, 40);
 
-        switch (additional_info_index) {
-        default:
-        case 0:
-          display.print(pl_mean, " kW");
-          break;
+          switch (additional_info_index) {
+          default:
+          case 0:
+            display.print(pl_mean, " kW");
+            break;
 
-        case 1:
-          display.print(sl_mean, " kVA");
-          break;
+          case 1:
+            display.print(sl_mean, " kVA");
+            break;
 
-        case 2:
-          display.print(ql_mean, " kvar");
-          break;
+          case 2:
+            display.print(ql_mean, " kvar");
+            break;
 
-        case 3:
-          display.print(freq, " Hz");
-          break;
+          case 3:
+            display.print(freq, " Hz");
+            break;
 
-        case 4:
-          display.print(pfl);
-          break;
+          case 4:
+            display.print(pfl);
+            break;
+          }
         }
         break;
 
