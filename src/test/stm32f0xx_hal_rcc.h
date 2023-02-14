@@ -1,0 +1,10 @@
+
+#ifndef SRC_FAKE_STM32F0XX_HAL_RCC_H
+#define SRC_FAKE_STM32F0XX_HAL_RCC_H
+
+#include "stm32f0xx_hal.h"
+
+#define __HAL_RCC_CRC_CLK_ENABLE()
+#define __HAL_RCC_CRC_CLK_DISABLE()
+
+#endif // SRC_FAKE_STM32F0XX_HAL_RCC_H

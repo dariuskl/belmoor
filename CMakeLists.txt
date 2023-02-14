@@ -39,8 +39,10 @@ target_compile_features(belmoor PUBLIC
 if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL ${CMAKE_HOST_SYSTEM_PROCESSOR})
 
     target_sources(belmoor PRIVATE
-            src/test.cpp
+            src/test/test.cpp
             src/m90e26_test.cpp
+            src/nvm.cpp
+            src/nvm_test.cpp
             src/pack_test.cpp
             src/relay_test.cpp
             src/spi_test.cpp
@@ -48,7 +50,7 @@ if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL ${CMAKE_HOST_SYSTEM_PROCESSOR})
             src/usb_test.cpp)
 
     target_include_directories(belmoor PRIVATE
-            src/fake
+            src/test
             lib/stm32f072c8tx/Core/Inc)
 
 else ()

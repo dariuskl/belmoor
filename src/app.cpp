@@ -204,7 +204,8 @@ namespace belmoor {
         msg = M90E26_register_transfer{M90E26_register::I_offset_L};
         spi_read(u1_spi, msg);
         const auto ioffsetl = msg.rx_value();
-        store(Persistent_data{{{false}}, {ugain, igainl, ioffsetl}});
+        store(
+            Persistent_data{{{false}}, {ugain, igainl, 0x7530U, 0U, ioffsetl}});
       }
 
       operating_mode = next_operating_mode;

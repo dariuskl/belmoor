@@ -1,5 +1,4 @@
 #include "nvm.hpp"
-#include "utils.hpp"
 
 #include <stm32f0xx_hal_flash.h>
 #include <stm32f0xx_hal_rcc.h>
@@ -12,7 +11,7 @@ namespace belmoor {
 
     template <typename Data_> uint32_t crc32(std::span<Data_> data) {
       __HAL_RCC_CRC_CLK_ENABLE();
-      CRC->CR = CRC->CR | CRC_CR_RESET_Msk;
+      CRC->CR = CRC->CR | CRC_CR_RESET;
       for (const auto &b : std::as_bytes(data)) {
         CRC->DR = static_cast<uint8_t>(b);
       }
@@ -32,7 +31,7 @@ namespace belmoor {
       } page;
     };
 
-    const auto storage_ = NVM{};
+    auto storage_ = NVM{};
 
   } // namespace
 
@@ -48,33 +47,25 @@ namespace belmoor {
   void store(const Persistent_data &data) {
     const auto checksum = crc32(std::span{&data, 1});
     auto erase_config = FLASH_EraseInitTypeDef{
-        FLASH_TYPEERASE_PAGES, reinterpret_cast<uint32_t>(&storage_), 1};
+        FLASH_TYPEERASE_PAGES,
+        static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&storage_)), 1};
     auto page_error = uint32_t{0};
     if ((HAL_FLASH_Unlock() == HAL_OK)
         and (HAL_FLASHEx_Erase(&erase_config, &page_error) == HAL_OK)
         and (page_error == 0xffffffffU)) {
       HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD,
-                        reinterpret_cast<uint32_t>(&storage_.data.checksum),
+                        reinterpret_cast<uintptr_t>(&(storage_.data.checksum)),
                         checksum);
       HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD,
-                        reinterpret_cast<uint32_t>(&storage_.data.version),
+                        reinterpret_cast<uintptr_t>(&(storage_.data.version)),
                         Persistent_data::Version);
-      HAL_FLASH_Program(
-          FLASH_TYPEPROGRAM_WORD,
-          reinterpret_cast<uint32_t>(&(storage_.data.payload.device)),
-          data.device.word);
-      HAL_FLASH_Program(
-          FLASH_TYPEPROGRAM_HALFWORD,
-          reinterpret_cast<uint32_t>(&(storage_.data.payload.u1_settings.Ugain)),
-          data.u1_settings.Ugain);
-      HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD,
-                        reinterpret_cast<uint32_t>(
-                            &(storage_.data.payload.u1_settings.IgainL)),
-                        data.u1_settings.IgainL);
-      HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD,
-                        reinterpret_cast<uint32_t>(
-                            &(storage_.data.payload.u1_settings.IoffsetL)),
-                        data.u1_settings.IoffsetL);
+      const auto *words = reinterpret_cast<const uint32_t *>(&data);
+      for (auto i = 0; i < (1 + ((int{sizeof data} - 1) / 4)); ++i) {
+        HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD,
+                          reinterpret_cast<uintptr_t>(&(storage_.data.payload))
+                              + static_cast<uint32_t>(i * 4),
+                          words[i]);
+      }
     }
     HAL_FLASH_Lock();
     /* FIXME the CPU does not see the changed flash memory contents until after

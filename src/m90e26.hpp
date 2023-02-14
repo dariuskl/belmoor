@@ -170,7 +170,7 @@ namespace belmoor {
     }
   }
 
-  struct M90E26_metering_registers {
+  struct [[gnu::packed]] M90E26_metering_registers {
     uint16_t PLconstH{0x0015U}, PLconstL{0xd174U}, Lgain{0U}, Lphi{0U},
         Ngain{0U}, Nphi{0U}, PStartTh{0x08bdU}, PNolTh{0U}, QStartTh{0x0aecU},
         QNolTh{0U}, MMode{0x9422U};
@@ -189,7 +189,7 @@ namespace belmoor {
     }
   };
 
-  struct M90E26_measurement_registers {
+  struct [[gnu::packed]] M90E26_measurement_registers {
     uint16_t Ugain{0x6720U}, IgainL{0x7A13U}, IgainN{0x7530U}, Uoffset{0U},
         IoffsetL{0U}, IoffsetN{0U}, PoffsetL{0U}, QoffsetL{0U}, PoffsetN{0U},
         QoffsetN{0U};
