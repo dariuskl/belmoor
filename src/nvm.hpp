@@ -6,12 +6,23 @@
 
 namespace belmoor {
 
-  struct NVM {
-    uint16_t Ugain, IgainL, IgainN, Uoffset, IoffsetL, IoffsetN;
+  struct Persistent_data {
+    static constexpr auto Version = uint32_t{20210521};
+
+    uint16_t Ugain, IgainL, IoffsetL;
+
+    constexpr Persistent_data() = default;
+
+    constexpr Persistent_data(const uint16_t ugain, const uint16_t igainl,
+             const uint16_t ioffsetl)
+        : Ugain{ugain}, IgainL{igainl}, IoffsetL{ioffsetl} {}
+
+    Persistent_data(const volatile Persistent_data &other)
+        : Ugain{other.Ugain}, IgainL{other.IgainL}, IoffsetL{other.IoffsetL} {}
   };
 
-  std::optional<NVM> restore();
-  void store(const NVM& data);
+  std::optional<Persistent_data> restore();
+  void store(const Persistent_data &data);
 
 } // namespace belmoor
 

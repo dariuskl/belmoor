@@ -2,6 +2,7 @@
 
 #include "display.hpp"
 #include "m90e26.hpp"
+#include "nvm.hpp"
 #include "relay.hpp"
 #include "spi.hpp"
 #include "usb.hpp"
@@ -19,9 +20,6 @@ namespace belmoor {
     Normal,
     Calibration
   };
-
-  constexpr auto operating_mode_texts = std::array<const char *, 4>{
-      {"OFF", "INI", "", "CAL"}};
 
   constexpr auto AdditionalInfo_Period = Duration{1000}; // ms
 
@@ -49,20 +47,20 @@ namespace belmoor {
     sleep_for(500);
   }
 
-  Operating_mode next_operating_mode(const Operating_mode current,
-                                     std::optional<uint16_t> status,
-                                     std::optional<uint16_t> adj_start) {
+  Operating_mode get_next_operating_mode(const Operating_mode current,
+                                         std::optional<uint16_t> status,
+                                         std::optional<uint16_t> adj_start) {
     switch (current) {
     default:
     case Operating_mode::Offline:
-      if (not status) {
-        return Operating_mode::Offline;
-      } else {
+      if (status and adj_start and (*adj_start != 0xffffU)) {
         return Operating_mode::SetUp;
+      } else {
+        return Operating_mode::Offline;
       }
 
     case Operating_mode::SetUp:
-      if ((not status) or (not adj_start)) {
+      if ((not status) or (not adj_start) or (*adj_start == 0xffffU)) {
         return Operating_mode::Offline;
       } else if (*adj_start == M90E26_AdjStart_Measurement) {
         return Operating_mode::Normal;
@@ -73,7 +71,7 @@ namespace belmoor {
       }
 
     case Operating_mode::Normal:
-      if ((not status) or (not adj_start)) {
+      if ((not status) or (not adj_start) or (*adj_start == 0xffffU)) {
         return Operating_mode::Offline;
       } else if (*adj_start == M90E26_AdjStart_NoMeasurement) {
         return Operating_mode::SetUp;
@@ -84,7 +82,7 @@ namespace belmoor {
       }
 
     case Operating_mode::Calibration:
-      if ((not status) or (not adj_start)) {
+      if ((not status) or (not adj_start) or (*adj_start == 0xffffU)) {
         return Operating_mode::Offline;
       } else if (*adj_start == M90E26_AdjStart_NoMeasurement) {
         return Operating_mode::SetUp;
@@ -159,18 +157,57 @@ namespace belmoor {
         ql_mean = std::nullopt;
       }
 
-      operating_mode = next_operating_mode(operating_mode, status, adj_start);
+      const auto next_operating_mode = get_next_operating_mode(
+          operating_mode, status, adj_start);
+
+      if ((operating_mode == Operating_mode::Offline)
+          and (next_operating_mode != Operating_mode::Offline)) {
+        if (const auto calibration = restore(); calibration) {
+          auto msg = M90E26_register_transfer{M90E26_register::U_gain,
+                                              calibration->Ugain};
+          spi_write(u1_spi, msg);
+          msg = M90E26_register_transfer{M90E26_register::I_gain_L,
+                                         calibration->IgainL};
+          spi_write(u1_spi, msg);
+          msg = M90E26_register_transfer{M90E26_register::I_offset_L,
+                                         calibration->IoffsetL};
+          spi_write(u1_spi, msg);
+          msg = M90E26_register_transfer{M90E26_register::AdjStart,
+                                         M90E26_AdjStart_Measurement};
+          spi_write(u1_spi, msg);
+        }
+      } else if ((operating_mode == Operating_mode::Calibration)
+                 and (next_operating_mode == Operating_mode::Normal)) {
+        auto msg = M90E26_register_transfer{M90E26_register::U_gain};
+        spi_read(u1_spi, msg);
+        const auto ugain = msg.rx_value();
+        msg = M90E26_register_transfer{M90E26_register::I_gain_L};
+        spi_read(u1_spi, msg);
+        const auto igainl = msg.rx_value();
+        msg = M90E26_register_transfer{M90E26_register::I_offset_L};
+        spi_read(u1_spi, msg);
+        const auto ioffsetl = msg.rx_value();
+        store(Persistent_data{ugain, igainl, ioffsetl});
+      }
+
+      operating_mode = next_operating_mode;
 
       switch (operating_mode) {
       case Operating_mode::Offline:
         HAL_GPIO_WritePin(LD1_RED_GPIO_Port, LD1_RED_Pin, GPIO_PIN_SET);
         HAL_GPIO_WritePin(LD1_GREEN_GPIO_Port, LD1_GREEN_Pin, GPIO_PIN_RESET);
+        display.set_font(Font_11x18)
+            .at(0, 0)
+            .print("Mains not")
+            .at(0, 20)
+            .print("connected")
+            .set_font(Font_7x10)
+            .at(0, 40);
         break;
 
       case Operating_mode::SetUp:
         HAL_GPIO_WritePin(LD1_RED_GPIO_Port, LD1_RED_Pin, GPIO_PIN_SET);
         HAL_GPIO_WritePin(LD1_GREEN_GPIO_Port, LD1_GREEN_Pin, GPIO_PIN_RESET);
-        // TODO write persisted calibration values to the IC
         display.set_font(Font_11x18)
             .at(0, 0)
             .print("Needs")
@@ -195,6 +232,7 @@ namespace belmoor {
 
       case Operating_mode::Normal:
         if (*status != 0U) {
+          // FIXME cannot see error text; overlayed by measurements
           HAL_GPIO_WritePin(LD1_RED_GPIO_Port, LD1_RED_Pin, GPIO_PIN_SET);
           display.set_font(Font_11x18)
               .at(0, 0)
@@ -278,18 +316,15 @@ namespace belmoor {
             127, 63);
       }
 
-      display.at(100, 0)
-          .set_font(Font_7x10)
-          .print(operating_mode_texts[static_cast<size_t>(operating_mode)])
-          .update();
+      display.update();
 
       if (auto message_buffer = usb::Message_buffer{};
           usb::receive(message_buffer)) {
         switch (message_buffer.id) {
         case usb::Message_identifier::M90E26_ReadRequest: {
-          auto msg = M90E26_register_transfer{static_cast<M90E26_register>(
-              message_buffer.payload.read_request.address.v)};
-          if (spi_read(u1_spi, msg)) {
+          if (auto msg = M90E26_register_transfer{static_cast<M90E26_register>(
+                  message_buffer.payload.read_request.address.v)};
+              spi_read(u1_spi, msg)) {
             usb::send(usb::M90E26_read_response{
                 i8{0},
                 {message_buffer.payload.read_request.address,
@@ -301,11 +336,13 @@ namespace belmoor {
         }
 
         case usb::Message_identifier::M90E26_WriteRequest: {
-          auto msg = M90E26_register_transfer{
-              static_cast<M90E26_register>(
-                  message_buffer.payload.write_request.reg.address.v),
-              message_buffer.payload.write_request.reg.value.v};
-          if (spi_write(u1_spi, msg)) {
+          if (auto msg
+              = M90E26_register_transfer{static_cast<M90E26_register>(
+                                             message_buffer.payload
+                                                 .write_request.reg.address.v),
+                                         message_buffer.payload.write_request
+                                             .reg.value.v};
+              spi_write(u1_spi, msg)) {
             usb::send(usb::M90E26_write_response{
                 i8{0},
                 {message_buffer.payload.write_request.reg.address,

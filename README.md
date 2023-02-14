@@ -42,11 +42,14 @@ Device changelog
 
 - Stuffed J6 with FTSH-105-01-F-DV-K-P and SWCLK, SWDIO series resistors as 10R.
 - Stuffed SW1 with a simple generic push button.
+- Stuffed C26 as 100 nF and R29 as 1k.
 - U4 (USBLC6-2) had a short from VBUS to GND. Removed.
 
 ### S/N 1076
 
 - Stuffed J6 with FTSH-105-01-F-DV-K-P and SWCLK, SWDIO series resistors as 10R.
+- Stuffed SW1 with a simple generic push button.
+- Stuffed C26 as 100 nF and R29 as 1k.
 - Resoldered mains-side power supply capacitors, which were stood off the board.
 - U4 prevented device from enumerating. Removed. Exact fault of the IC still
   to be determined.
@@ -55,6 +58,7 @@ Device changelog
 
 - Stuffed J6 with FTSH-105-01-F-DV-K-P and SWCLK, SWDIO series resistors as 10R.
 - Stuffed SW1 with a simple generic push button.
+- Stuffed C26 as 100 nF and R29 as 1k.
 - Desoldered relay, trimmed off NC pins, soldered back and bridged NO pins to
   NC pads, thus inverting relay function in order to make sure it is turned off
   on start.

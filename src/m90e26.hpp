@@ -13,6 +13,9 @@ namespace belmoor {
     SysStatus,
     LastData = 0x06U, // Last data that was read/written via SPI
     AdjStart = 0x30U, // Measurement Calibration Start Command
+    U_gain = 0x31U,
+    I_gain_L = 0x32U,
+    I_offset_L = 0x35U,
     I_rms = 0x48U,    // RMS current trough Live
     U_rms = 0x49U,    // RMS voltage between Live and Neutral
     P_mean = 0x4aU,   // mean active power over Live
