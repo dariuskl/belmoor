@@ -153,8 +153,8 @@ namespace belmoor {
     if (auto msg = M90E26_register_transfer{M90E26_register::PowerF};
         read(msg)) {
       const auto data = msg.rx_value();
-      return {{static_cast<int32_t>(data)
-               * (static_cast<int32_t>((data & 0x8000) >> 15U) * -1)}};
+      return {{static_cast<int32_t>(data & ~0x8000)
+               * static_cast<int32_t>((data & 0x8000) ? -1 : 1)}};
     } else {
       return {};
     }

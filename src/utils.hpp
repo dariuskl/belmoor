@@ -90,13 +90,19 @@ namespace belmoor {
   template <int ScalingFactor_> struct Fixed_point { int32_t raw; };
 
   template <int ScalingFactor_>
+  constexpr bool operator==(const Fixed_point<ScalingFactor_> &lhs,
+                           const double rhs) {
+    return lhs.raw == static_cast<decltype(lhs.raw)>(rhs * ScalingFactor_);
+  }
+
+  template <int ScalingFactor_>
   constexpr bool operator>(const Fixed_point<ScalingFactor_> &lhs,
                            const double rhs) {
     return lhs.raw > static_cast<decltype(lhs.raw)>(rhs * ScalingFactor_);
   }
 
   template <int ScalingFactor_>
-  int print(char *const buffer, const int buffer_len,
+  int print(char *const buffer, const ptrdiff_t buffer_len,
             Fixed_point<ScalingFactor_> fp) {
     static_assert((ScalingFactor_ == 1) or (ScalingFactor_ == 10)
                   or (ScalingFactor_ == 100) or ScalingFactor_ == 1000);
