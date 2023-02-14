@@ -7,17 +7,24 @@
 #include <ssd1306.h>
 
 #include <array>
+#include <cstring>
 
 namespace belmoor {
 
   class Display {
     std::array<char, 64> buf_{};
     FontDef font_{Font_6x8};
+    SSD1306_COLOR color_{White};
 
    public:
     Display() {
       ssd1306_Init();
       ssd1306_SetDisplayOn(1U);
+    }
+
+    Display &set_color(const SSD1306_COLOR color) {
+      color_ = color;
+      return *this;
     }
 
     Display &set_font(const FontDef font) {
@@ -42,14 +49,19 @@ namespace belmoor {
 
     template <typename... Args> Display &print(Args... args) {
       belmoor::print(buf_, args...);
-      ssd1306_WriteString(buf_.data(), font_, White);
+      const auto anchor = ssd1306_GetCursor();
+      for (char *s = std::strtok(buf_.data(), "\n"); s;
+           s = std::strtok(nullptr, "\n"),
+                at(anchor.x, ssd1306_GetCursor().y + font_.FontHeight)) {
+        ssd1306_WriteString(s, font_, color_);
+      }
       return *this;
     }
 
     Display &line_to(const int x, const int y) {
       const auto start = ssd1306_GetCursor();
       ssd1306_Line(start.x, start.y, static_cast<uint8_t>(x),
-                   static_cast<uint8_t>(y), White);
+                   static_cast<uint8_t>(y), color_);
       ssd1306_SetCursor(static_cast<uint8_t>(x), static_cast<uint8_t>(y));
       return *this;
     }

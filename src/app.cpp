@@ -219,9 +219,7 @@ namespace belmoor {
         relay.update();
         display.set_font(Font_11x18)
             .at(0, 0)
-            .print("Mains not")
-            .at(0, 20)
-            .print("connected")
+            .print("Mains not\nconnected")
             .set_font(Font_7x10)
             .at(0, 40);
         break;
@@ -231,9 +229,7 @@ namespace belmoor {
         HAL_GPIO_WritePin(LD1_GREEN_GPIO_Port, LD1_GREEN_Pin, GPIO_PIN_RESET);
         display.set_font(Font_11x18)
             .at(0, 0)
-            .print("Needs")
-            .at(0, 20)
-            .print("Calibration")
+            .print("Needs\ncalibration")
             .set_font(Font_7x10)
             .at(0, 40);
         switch (additional_info_index) {
