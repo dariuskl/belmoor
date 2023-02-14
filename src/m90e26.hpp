@@ -59,7 +59,8 @@ namespace belmoor {
     [[nodiscard]] std::span<std::byte> rx_data() { return std::span(rx_); }
 
     [[nodiscard]] uint16_t rx_value() const {
-      return static_cast<uint16_t>((rx_[2] << 8U) | rx_[3]);
+      return static_cast<uint16_t>((static_cast<uint16_t>(rx_[1]) << 8U)
+                                   | static_cast<uint16_t>(rx_[2]));
     }
   };
 

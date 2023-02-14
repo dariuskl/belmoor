@@ -51,8 +51,10 @@ Device changelog
 - U4 prevented device from enumerating. Removed. Exact fault of the IC still
   to be determined.
 
-### S/N ????
+### S/N 1098
 
+- Stuffed J6 with FTSH-105-01-F-DV-K-P and SWCLK, SWDIO series resistors as 10R.
+- Stuffed SW1 with a simple generic push button.
 - Desoldered relay, trimmed off NC pins, soldered back and bridged NO pins to
   NC pads, thus inverting relay function in order to make sure it is turned off
   on start.

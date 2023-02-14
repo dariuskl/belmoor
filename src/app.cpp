@@ -245,6 +245,12 @@ namespace belmoor {
       case Operating_mode::Calibration:
         HAL_GPIO_WritePin(LD1_RED_GPIO_Port, LD1_RED_Pin, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(LD1_GREEN_GPIO_Port, LD1_GREEN_Pin, GPIO_PIN_RESET);
+
+        display.set_font(Font_11x18)
+            .at(0, 0)
+            .print(u_rms, " V")
+            .at(0, 20)
+            .print(il_rms, " A");
         break;
       }
 
@@ -300,7 +306,6 @@ namespace belmoor {
                   message_buffer.payload.write_request.reg.address.v),
               message_buffer.payload.write_request.reg.value.v};
           if (spi_write(u1_spi, msg)) {
-            // TODO read back LastData register
             usb::send(usb::M90E26_write_response{
                 i8{0},
                 {message_buffer.payload.write_request.reg.address,
