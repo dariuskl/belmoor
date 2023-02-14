@@ -1,0 +1,9 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP M90E26
+D Single-Phase High-Performance Wide-Span Energy Metering IC
+K energy metering
+F https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&cad=rja&uact=8&ved=2ahUKEwio08nwl8LwAhXygf0HHVS0BCMQFjAAegQIBBAD&url=https%3A%2F%2Fww1.microchip.com%2Fdownloads%2Fen%2FDeviceDoc%2FAtmel-46002-SE-M90E26-Datasheet.pdf&usg=AOvVaw35Kx-Tt0ig5K6GQ77ohdjs
+$ENDCMP
+#
+#End Doc Library
