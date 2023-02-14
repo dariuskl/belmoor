@@ -123,7 +123,9 @@ namespace belmoor {
   std::optional<Fixed_point<1000>> read_real_power(ReadFn_ read) {
     if (auto msg = M90E26_register_transfer{M90E26_register::P_mean};
         read(msg)) {
-      return {{static_cast<int16_t>(msg.rx_value())}};
+      const auto data = msg.rx_value();
+      return {{static_cast<int32_t>(data & ~0x8000)
+               * static_cast<int32_t>((data & 0x8000) ? -1 : 1)}};
     } else {
       return {};
     }
@@ -133,7 +135,9 @@ namespace belmoor {
   std::optional<Fixed_point<1000>> read_reactive_power(ReadFn_ read) {
     if (auto msg = M90E26_register_transfer{M90E26_register::Q_mean};
         read(msg)) {
-      return {{static_cast<int16_t>(msg.rx_value())}};
+      const auto data = msg.rx_value();
+      return {{static_cast<int32_t>(data & ~0x8000)
+               * static_cast<int32_t>((data & 0x8000) ? -1 : 1)}};
     } else {
       return {};
     }
