@@ -37,17 +37,19 @@ namespace belmoor {
   constexpr auto Relay_Timeout = Duration{100}; // ms
 
   class Relay {
-    // Whether the relay will be forced to switch after a given time, if no
-    // zero crossing is being detected.
+    bool is_normally_open_{false};
     bool should_close_{false};
     bool is_closed_;
+    // Whether the relay will be forced to switch after a given time, if no
+    // zero crossing is being detected.
     const bool enable_timeout_{false};
     Duration timeout_{Relay_Timeout};
 
    public:
     constexpr Relay(const bool is_normally_open,
                     const bool enable_timeout) noexcept
-        : is_closed_{not is_normally_open}, enable_timeout_{enable_timeout} {}
+        : is_normally_open_{is_normally_open}, is_closed_{not is_normally_open},
+          enable_timeout_{enable_timeout} {}
 
     [[nodiscard]] bool closed() const { return is_closed_; }
     [[nodiscard]] bool pending() const { return should_close_ != is_closed_; }
@@ -65,10 +67,11 @@ namespace belmoor {
     void force() {
       if (should_close_) {
         HAL_GPIO_WritePin(RL1_nENABLE_GPIO_Port, RL1_nENABLE_Pin,
-                          GPIO_PIN_RESET);
+                          is_normally_open_ ? GPIO_PIN_SET : GPIO_PIN_RESET);
         is_closed_ = true;
       } else {
-        HAL_GPIO_WritePin(RL1_nENABLE_GPIO_Port, RL1_nENABLE_Pin, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(RL1_nENABLE_GPIO_Port, RL1_nENABLE_Pin,
+                          is_normally_open_ ? GPIO_PIN_RESET : GPIO_PIN_SET);
         is_closed_ = false;
       }
     }
