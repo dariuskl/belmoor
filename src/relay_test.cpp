@@ -21,7 +21,7 @@ namespace belmoor {
           REQUIRE(uut.pending());
 
           WHEN("forcing the switch") {
-            uut.force();
+            uut.update();
 
             THEN("relay closes") {
               REQUIRE(uut.closed());

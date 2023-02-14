@@ -1,5 +1,3 @@
-#include <main.h>
-
 #include "display.hpp"
 #include "m90e26.hpp"
 #include "nvm.hpp"
@@ -7,6 +5,10 @@
 #include "spi.hpp"
 #include "usb.hpp"
 #include "utils.hpp"
+
+#include <main.h>
+
+#include <functional>
 
 namespace belmoor {
 
@@ -22,8 +24,6 @@ namespace belmoor {
   };
 
   constexpr auto AdditionalInfo_Period = Duration{1000}; // ms
-
-  auto relay = Relay{true, false};
 
   // When initially powered, the device will fully turn on and then off all
   // indicators for a given duration in order to provide the user with a means
@@ -94,12 +94,18 @@ namespace belmoor {
     }
   }
 
+  auto on_u1_zx_edge = std::function<void()>{};
+  auto on_sw1_falling = std::function<void()>{};
+
   [[noreturn]] void mainloop() {
     static auto u1_spi = Soft_SPI{};
     htim2.PeriodElapsedCallback = [](TIM_HandleTypeDef *) { u1_spi.tick(); };
 
+    const auto parameters = restore();
+
     auto display = Display{};
-    auto button = Button{};
+    auto relay = Relay{parameters
+                       && parameters->device.options.relay_normally_open};
     auto status = std::optional<uint16_t>{};
     auto adj_start = std::optional<uint16_t>{};
     auto il_rms = std::optional<Fixed_point<1000>>{};
@@ -113,6 +119,9 @@ namespace belmoor {
     auto additional_info_timer = AdditionalInfo_Period;
     auto operating_mode = Operating_mode::Offline;
 
+    on_u1_zx_edge = [&] { relay.update(); };
+    on_sw1_falling = [&] { relay.toggle(); };
+
     relay.close();
 
     prove_out(display);
@@ -120,12 +129,6 @@ namespace belmoor {
     auto sys_tick = Sys_tick{};
     while (true) {
       const auto period = sys_tick();
-
-      if (button.down()) {
-        relay.toggle();
-      }
-
-      relay(period);
 
       display.clear();
 
@@ -210,6 +213,9 @@ namespace belmoor {
       case Operating_mode::Offline:
         HAL_GPIO_WritePin(LD1_RED_GPIO_Port, LD1_RED_Pin, GPIO_PIN_SET);
         HAL_GPIO_WritePin(LD1_GREEN_GPIO_Port, LD1_GREEN_Pin, GPIO_PIN_RESET);
+        // If there is no mains, there will never be a zero crossing and also
+        // no risk of an arc, so the relay may be updated immediately.
+        relay.update();
         display.set_font(Font_11x18)
             .at(0, 0)
             .print("Mains not")
@@ -374,14 +380,25 @@ namespace belmoor {
     }
   }
 
-  void on_u1_zx_edge() { relay.force(); }
-
 } // namespace belmoor
 
 extern "C" void mainloop() { belmoor::mainloop(); }
 
-extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-  if (GPIO_Pin == U1_ZX_Pin) {
-    belmoor::on_u1_zx_edge();
+extern "C" void HAL_GPIO_EXTI_Callback(const uint16_t GPIO_Pin) {
+  switch (GPIO_Pin) {
+  case U1_ZX_Pin:
+    if (belmoor::on_u1_zx_edge) {
+      belmoor::on_u1_zx_edge();
+    }
+    break;
+
+  case SW1_nPRESSED_Pin:
+    if (belmoor::on_sw1_falling) {
+      belmoor::on_sw1_falling();
+    }
+    break;
+
+  default:
+    break;
   }
 }
