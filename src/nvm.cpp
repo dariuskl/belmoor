@@ -28,7 +28,7 @@ namespace belmoor {
         Persistent_data payload;
       } data;
       struct alignas(FLASH_PAGE_SIZE) {
-        std::array<std::byte, FLASH_PAGE_SIZE> bytes;
+        std::array<std::byte, FLASH_PAGE_SIZE> bytes{};
       } page;
     };
 
@@ -60,19 +60,25 @@ namespace belmoor {
                         reinterpret_cast<uint32_t>(&storage_.data.version),
                         Persistent_data::Version);
       HAL_FLASH_Program(
-          FLASH_TYPEPROGRAM_HALFWORD,
-          reinterpret_cast<uint32_t>(&(storage_.data.payload.Ugain)),
-          data.Ugain);
+          FLASH_TYPEPROGRAM_WORD,
+          reinterpret_cast<uint32_t>(&(storage_.data.payload.device)),
+          data.device.word);
       HAL_FLASH_Program(
           FLASH_TYPEPROGRAM_HALFWORD,
-          reinterpret_cast<uint32_t>(&(storage_.data.payload.IgainL)),
-          data.IgainL);
-      HAL_FLASH_Program(
-          FLASH_TYPEPROGRAM_HALFWORD,
-          reinterpret_cast<uint32_t>(&(storage_.data.payload.IoffsetL)),
-          data.IoffsetL);
+          reinterpret_cast<uint32_t>(&(storage_.data.payload.u1_settings.Ugain)),
+          data.u1_settings.Ugain);
+      HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD,
+                        reinterpret_cast<uint32_t>(
+                            &(storage_.data.payload.u1_settings.IgainL)),
+                        data.u1_settings.IgainL);
+      HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD,
+                        reinterpret_cast<uint32_t>(
+                            &(storage_.data.payload.u1_settings.IoffsetL)),
+                        data.u1_settings.IoffsetL);
     }
     HAL_FLASH_Lock();
+    /* FIXME the CPU does not see the changed flash memory contents until after
+     *    a power cycle?! */
   }
 
 } // namespace belmoor

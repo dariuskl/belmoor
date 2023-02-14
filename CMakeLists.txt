@@ -40,6 +40,7 @@ if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL ${CMAKE_HOST_SYSTEM_PROCESSOR})
 
     target_sources(belmoor PRIVATE
             src/test.cpp
+            src/m90e26_test.cpp
             src/pack_test.cpp
             src/relay_test.cpp
             src/spi_test.cpp

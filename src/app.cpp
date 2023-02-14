@@ -142,9 +142,6 @@ namespace belmoor {
         pfl = read_power_factor(SPI_read{u1_spi});
         freq = read_frequency(SPI_read{u1_spi});
         il_rms = read_current(SPI_read{u1_spi});
-        if (il_rms) {
-          il_rms = {(*il_rms).raw * 10};
-        }
         u_rms = read_voltage(SPI_read{u1_spi});
         pl_mean = read_real_power(SPI_read{u1_spi});
         sl_mean = read_apparent_power(SPI_read{u1_spi});
@@ -165,15 +162,29 @@ namespace belmoor {
 
       if ((operating_mode == Operating_mode::Offline)
           and (next_operating_mode != Operating_mode::Offline)) {
-        if (const auto calibration = restore(); calibration) {
-          auto msg = M90E26_register_transfer{M90E26_register::U_gain,
-                                              calibration->Ugain};
+        auto metering_regs = M90E26_metering_registers{};
+        metering_regs.MMode = static_cast<uint16_t>(metering_regs.MMode
+                                                    & ~M90E26_MMode_Lgain_Mask)
+                              | M90E26_MMode_Lgain_16;
+        auto msg = M90E26_register_transfer{M90E26_register::MMode,
+                                            metering_regs.MMode};
+        spi_write(u1_spi, msg);
+        msg = M90E26_register_transfer{M90E26_register::CS1,
+                                       metering_regs.cs1()};
+        spi_write(u1_spi, msg);
+
+        if (parameters) {
+          msg = M90E26_register_transfer{M90E26_register::U_gain,
+                                         parameters->u1_settings.Ugain};
           spi_write(u1_spi, msg);
           msg = M90E26_register_transfer{M90E26_register::I_gain_L,
-                                         calibration->IgainL};
+                                         parameters->u1_settings.IgainL};
           spi_write(u1_spi, msg);
           msg = M90E26_register_transfer{M90E26_register::I_offset_L,
-                                         calibration->IoffsetL};
+                                         parameters->u1_settings.IoffsetL};
+          spi_write(u1_spi, msg);
+          msg = M90E26_register_transfer{M90E26_register::CS2,
+                                         parameters->u1_settings.cs2()};
           spi_write(u1_spi, msg);
           msg = M90E26_register_transfer{M90E26_register::AdjStart,
                                          M90E26_AdjStart_Measurement};
@@ -190,7 +201,7 @@ namespace belmoor {
         msg = M90E26_register_transfer{M90E26_register::I_offset_L};
         spi_read(u1_spi, msg);
         const auto ioffsetl = msg.rx_value();
-        store(Persistent_data{ugain, igainl, ioffsetl});
+        store(Persistent_data{{{false}}, {ugain, igainl, ioffsetl}});
       }
 
       operating_mode = next_operating_mode;

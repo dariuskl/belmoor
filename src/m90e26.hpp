@@ -2,8 +2,12 @@
 #ifndef BELMOOR_M90E26_HPP_
 #define BELMOOR_M90E26_HPP_ 1
 
+#include "utils.hpp"
+
 #include <cstddef>
 #include <cstdint>
+#include <numeric>
+#include <optional>
 #include <span>
 
 namespace belmoor {
@@ -12,25 +16,35 @@ namespace belmoor {
     SoftReset,
     SysStatus,
     LastData = 0x06U, // Last data that was read/written via SPI
+    MMode = 0x2bU,
+    CS1 = 0x2cU,
     AdjStart = 0x30U, // Measurement Calibration Start Command
     U_gain = 0x31U,
     I_gain_L = 0x32U,
     I_offset_L = 0x35U,
-    I_rms = 0x48U,    // RMS current trough Live
-    U_rms = 0x49U,    // RMS voltage between Live and Neutral
-    P_mean = 0x4aU,   // mean active power over Live
-    Q_mean = 0x4bU,   // mean reactive power over Live
-    Freq = 0x4cU,     // voltage frequency, 0.01 Hz
-    PowerF = 0x4dU,   // power factor of Live, 0.001
-    S_mean = 0x4fU,   // mean apparent power over Live
+    CS2 = 0x3bU,
+    I_rms = 0x48U,  // RMS current trough Live
+    U_rms = 0x49U,  // RMS voltage between Live and Neutral
+    P_mean = 0x4aU, // mean active power over Live
+    Q_mean = 0x4bU, // mean reactive power over Live
+    Freq = 0x4cU,   // voltage frequency, 0.01 Hz
+    PowerF = 0x4dU, // power factor of Live, 0.001
+    S_mean = 0x4fU, // mean apparent power over Live
   };
 
-  constexpr auto M90E26_SysStatus_SagWarn = u16{0x0002};
-  constexpr auto M90E26_SysStatus_RevPchg = u16{0x0020};
-  constexpr auto M90E26_SysStatus_RevQchg = u16{0x0040};
-  constexpr auto M90E26_SysStatus_LNchange = u16{0x0080};
-  constexpr auto M90E26_SysStatus_AdjErr = u16{0x7000};
-  constexpr auto M90E26_SysStatus_CalErr = u16{0xC000};
+  constexpr auto M90E26_SysStatus_SagWarn = uint16_t{0x0002};
+  constexpr auto M90E26_SysStatus_RevPchg = uint16_t{0x0020};
+  constexpr auto M90E26_SysStatus_RevQchg = uint16_t{0x0040};
+  constexpr auto M90E26_SysStatus_LNchange = uint16_t{0x0080};
+  constexpr auto M90E26_SysStatus_AdjErr = uint16_t{0x7000};
+  constexpr auto M90E26_SysStatus_CalErr = uint16_t{0xC000};
+
+  constexpr auto M90E26_MMode_Lgain_Mask = uint16_t{0xe000};
+  constexpr auto M90E26_MMode_Lgain_1 = uint16_t{0x8000};
+  constexpr auto M90E26_MMode_Lgain_4 = uint16_t{0x0000};
+  constexpr auto M90E26_MMode_Lgain_8 = uint16_t{0x2000};
+  constexpr auto M90E26_MMode_Lgain_16 = uint16_t{0x4000};
+  constexpr auto M90E26_MMode_Lgain_24 = uint16_t{0x6000};
 
   constexpr auto M90E26_AdjStart_NoMeasurement = 0x6886U;
   constexpr auto M90E26_AdjStart_Adjustment = 0x5678U;
@@ -155,6 +169,44 @@ namespace belmoor {
       return {};
     }
   }
+
+  struct M90E26_metering_registers {
+    uint16_t PLconstH{0x0015U}, PLconstL{0xd174U}, Lgain{0U}, Lphi{0U},
+        Ngain{0U}, Nphi{0U}, PStartTh{0x08bdU}, PNolTh{0U}, QStartTh{0x0aecU},
+        QNolTh{0U}, MMode{0x9422U};
+
+    [[nodiscard]] uint16_t cs1() const {
+      const auto bytes = std::as_bytes(std::span{this, 1});
+      const auto lh2c = std::accumulate(
+          bytes.begin(), bytes.end(), std::pair<uint8_t, uint8_t>{0U, 0U},
+          [](const std::pair<uint8_t, uint8_t> &sum,
+             const std::byte &rhs) -> std::pair<uint8_t, uint8_t> {
+            return {sum.first + static_cast<uint8_t>(rhs),
+                    sum.second ^ static_cast<uint8_t>(rhs)};
+          });
+      return static_cast<uint16_t>((static_cast<uint16_t>(lh2c.second) << 8U)
+                                   | lh2c.first);
+    }
+  };
+
+  struct M90E26_measurement_registers {
+    uint16_t Ugain{0x6720U}, IgainL{0x7A13U}, IgainN{0x7530U}, Uoffset{0U},
+        IoffsetL{0U}, IoffsetN{0U}, PoffsetL{0U}, QoffsetL{0U}, PoffsetN{0U},
+        QoffsetN{0U};
+
+    [[nodiscard]] uint16_t cs2() const {
+      const auto bytes = std::as_bytes(std::span{this, 1});
+      const auto lh3b = std::accumulate(
+          bytes.begin(), bytes.end(), std::pair<uint8_t, uint8_t>{0U, 0U},
+          [](const std::pair<uint8_t, uint8_t> &sum,
+             const std::byte &rhs) -> std::pair<uint8_t, uint8_t> {
+            return {sum.first + static_cast<uint8_t>(rhs),
+                    sum.second ^ static_cast<uint8_t>(rhs)};
+          });
+      return static_cast<uint16_t>((static_cast<uint16_t>(lh3b.second) << 8U)
+                                   | lh3b.first);
+    }
+  };
 
 } // namespace belmoor
 
